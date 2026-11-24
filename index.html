@@ -1,0 +1,176 @@
+<!doctype html>
+<!--
+
+    ░▀█▀░█░█░█▀▀░░░█░░░▀█▀░█▀▀░▀█▀░█▀▀░█▀█░▀█▀░█▀█░█▀▀░░░█░█░█▀█░█░░░█░░
+    ░░█░░█▀█░█▀▀░░░█░░░░█░░▀▀█░░█░░█▀▀░█░█░░█░░█░█░█░█░░░█▄█░█▀█░█░░░█░░
+    ░░▀░░▀░▀░▀▀▀░░░▀▀▀░▀▀▀░▀▀▀░░▀░░▀▀▀░▀░▀░▀▀▀░▀░▀░▀▀▀░░░▀░▀░▀░▀░▀▀▀░▀▀▀
+
+       ╭──┬────────────────────────────╮
+       │▒▒│   THE LISTENING WALL  CD   │
+       │▒▒│        .-"""""""-.         │
+       │▒▒│      .'  .-----.  '.       │
+       │▒▒│     /   /       \   \      │
+       │▒▒│    |   |  ( ◎ )  |   |     │
+       │▒▒│     \   \       /   /      │
+       │▒▒│      '.  '-----'  .'       │
+       │▒▒│        '-.......-'         │
+       │▒▒│   ▶ 73 CDs                 │
+       ╰──┴────────────────────────────╯
+
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Security: only this site's own scripts and styles (plus Google Fonts) may load; no plugins, no forms, no <base> tricks -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' blob: https:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>The Listening Wall</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#140b06">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- The endless wall: everything you pan around lives inside #ShelfWall -->
+<main id="ListeningRoom" class="listening-room" aria-label="CD collection">
+    <!-- #WallTilt leans the whole wall in 3D; #ShelfWall is the camera -->
+    <div id="WallTilt" class="wall-tilt">
+        <div id="ShelfWall" class="shelf-wall"></div>
+    </div>
+</main>
+
+<!-- The wheel: the same collection stood round a slowly turning ring (switched on with the toggle, top right) -->
+<section id="WheelView" class="wheel-view" aria-label="CD collection, wheel view" hidden>
+    <div id="WheelRing" class="wheel-ring"></div>
+</section>
+
+<!-- Photographic finish layers (fixed to the screen): room light, ceiling glow + lens fall-off -->
+<div class="evening-light" aria-hidden="true"></div>
+<div class="room-vignette" aria-hidden="true"></div>
+
+<!-- Wheel view: the CD under the mouse, shown large in the corner -->
+<div id="WheelPreview" class="wheel-preview" aria-hidden="true">
+    <div class="wheel-preview__cover"><img id="WheelPreviewImage" alt="" draggable="false"></div>
+    <span id="WheelPreviewAlbum" class="wheel-preview__album"></span>
+    <span id="WheelPreviewArtist" class="wheel-preview__artist"></span>
+</div>
+
+<!-- Top left: the site's name (SiteTitle in config.js); clicking it goes home (reloads on the wall) -->
+<h1 class="site-title"><a id="SiteTitle" class="site-title__link" href="./" title="Home">DH Listening Wall</a></h1>
+
+<!-- Top right: shuffle (open a random album) and the Wall / Wheel toggle -->
+<nav class="view-controls" aria-label="View controls">
+    <button id="ShuffleButton" class="view-controls__shuffle" type="button" aria-label="Shuffle: open a random album" title="Shuffle">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5h3c2.2 0 3.4 1.1 4.6 2.9l2 3.2c1.2 1.9 2.4 2.9 4.6 2.9H20M17.5 14l2.5 2.5-2.5 2.5M3 16.5h3c1.5 0 2.6-.5 3.5-1.4M13.6 8.9c.9-.9 2-1.4 3.6-1.4H20M17.5 5l2.5 2.5-2.5 2.5"/></svg>
+    </button>
+    <button id="ViewToggle" class="view-toggle" type="button" role="switch" aria-checked="false" aria-label="Wheel view" title="Wall / Wheel">
+        <span class="view-toggle__thumb" aria-hidden="true"></span>
+        <svg class="view-toggle__icon view-toggle__icon--wall" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM4 9.3h16M4 14.6h16M9.3 4v16M14.6 4v16"/></svg>
+        <svg class="view-toggle__icon view-toggle__icon--wheel" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="9" ry="4.2"/><path d="M5 9.2v5.6M19 9.2v5.6M12 7.8v8.4"/></svg>
+    </button>
+</nav>
+
+<!-- Album + artist that follow the mouse over a CD -->
+<div id="HoverCaption" class="hover-caption" aria-hidden="true">
+    <span id="HoverCaptionAlbum" class="hover-caption__album"></span>
+    <span id="HoverCaptionArtist" class="hover-caption__artist"></span>
+</div>
+
+<!-- Loading counter, shown for a moment while the wall is built -->
+<div id="Preloader" class="preloader" aria-hidden="true">
+    <span id="PreloaderCount" class="preloader__count">0</span><span class="preloader__percent">%</span>
+</div>
+
+<!-- Collection footer: a ^ tab at the bottom; comes up on hover near the bottom or a click, and stays until tucked away -->
+<footer id="CollectionFooter" class="collection-footer" aria-label="Full collection list">
+    <!-- Tab: arrows (or a swipe up / down on the tab or heading) raise and lower the footer -->
+    <div class="collection-footer__tab">
+        <button type="button" class="collection-footer__arrow" data-footer-step="up" aria-label="Show more of the collection list">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
+        </button>
+        <button type="button" class="collection-footer__arrow" data-footer-step="down" aria-label="Show less of the collection list">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+    </div>
+    <div id="CollectionFooterInner" class="collection-footer__inner">
+        <div class="collection-footer__header">
+            <div class="collection-footer__intro">
+                <p id="CollectionFooterText" class="collection-footer__text"></p>
+            </div>
+            <div class="collection-footer__controls">
+                <label class="collection-search">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+                    <input id="CollectionSearch" class="collection-search__input" type="search" placeholder="Search albums or artists" aria-label="Search albums or artists" autocomplete="off" spellcheck="false" enterkeyhint="search">
+                </label>
+                <span id="CollectionFooterCount" class="collection-footer__count"></span>
+                <div class="sort-toggle" role="group" aria-label="Sort albums">
+                    <button type="button" class="sort-toggle__button" data-sort-order="NameAscending" aria-pressed="true" aria-label="Album name, A to Z">A–Z</button>
+                    <button type="button" class="sort-toggle__button" data-sort-order="NameDescending" aria-pressed="false" aria-label="Album name, Z to A">Z–A</button>
+                    <button type="button" class="sort-toggle__button" data-sort-order="YearOldestFirst" aria-pressed="false" aria-label="Year, oldest first">Oldest</button>
+                    <button type="button" class="sort-toggle__button" data-sort-order="YearNewestFirst" aria-pressed="false" aria-label="Year, newest first">Newest</button>
+                </div>
+            </div>
+        </div>
+        <ol id="CollectionFooterList" class="collection-list"></ol>
+        <p id="CollectionNoResults" class="collection-list__empty" hidden>No albums match that search.</p>
+    </div>
+</footer>
+
+<!-- Album details popup (opened by clicking / tapping a CD). Click the case to flip it. -->
+<div id="AlbumDetailsPopup" class="album-details" hidden>
+    <div class="album-details__backdrop" data-close-popup></div>
+    <section class="album-details__panel" role="dialog" aria-modal="true" tabindex="-1" aria-labelledby="AlbumDetailsTitle">
+        <button class="album-details__close" type="button" data-close-popup aria-label="Close">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <!-- Previous / next album (also: swipe, sideways scroll, or the ← → keys) -->
+        <button class="album-details__step album-details__step--previous" type="button" data-album-step="-1" aria-label="Previous album">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <button class="album-details__step album-details__step--next" type="button" data-album-step="1" aria-label="Next album">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <!-- Everything below scrolls inside the popup; the close button stays put -->
+        <div id="AlbumDetailsScroll" class="album-details__scroll">
+            <div id="AlbumDetailsCase" class="album-details__case" role="button" tabindex="0" aria-pressed="false" aria-label="Flip the case to see the tracklist">
+                <div class="album-details__flipper">
+                    <div id="AlbumDetailsFront" class="cd-face album-details__front">
+                        <img id="AlbumDetailsCover" class="album-details__cover" alt="" draggable="false">
+                        <!-- Shown until a front photo is uploaded for this album -->
+                        <span class="photo-slot" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="M4 8.5h3l1.6-2.5h6.8L17 8.5h3v10H4z"/><circle cx="12" cy="13.2" r="3.4"/></svg>
+                            <span id="AlbumDetailsSlotNumber" class="photo-slot__number"></span>
+                        </span>
+                        <span class="cd-gloss" aria-hidden="true"></span>
+                    </div>
+                    <div id="AlbumDetailsBack" class="cd-face cd-back"></div>
+                </div>
+            </div>
+            <div class="album-details__info">
+                <p id="AlbumDetailsMeta" class="album-details__meta"></p>
+                <h2 id="AlbumDetailsTitle" class="album-details__title"></h2>
+                <a id="AlbumDetailsArtist" class="album-details__artist" target="_blank" rel="noopener noreferrer"></a>
+                <a id="AlbumDetailsSpotify" class="album-details__spotify" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11"/><path d="M6.5 9.2c3.9-1.1 7.9-.8 11.2 1M7.2 12.4c3.2-.9 6.4-.6 9.2.9M7.9 15.4c2.5-.6 5-.4 7.2.7"/></svg>
+                    <span>Open album in Spotify</span>
+                </a>
+            </div>
+            <!-- Scroll down for the tracklist -->
+            <section class="album-details__tracklist" aria-labelledby="AlbumDetailsTracklistHeading">
+                <h3 id="AlbumDetailsTracklistHeading" class="album-details__tracklist-heading">Tracklist</h3>
+                <ol id="AlbumDetailsTracks" class="album-details__tracks"></ol>
+                <p id="AlbumDetailsRuntime" class="album-details__runtime"></p>
+            </section>
+        </div>
+    </section>
+</div>
+
+<script src="config.js"></script>
+<script src="albums.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
